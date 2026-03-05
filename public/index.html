@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Toán Trên Mây</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; width: 100%; max-width: 500px; text-align: center; }
+        input { width: 60px; padding: 8px; margin: 0 5px; text-align: center; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; margin-top: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; }
+        .history-list { text-align: left; list-style: none; padding: 0; }
+        .history-list li { background: #f9f9f9; padding: 10px; margin-bottom: 8px; border-left: 4px solid #007bff; border-radius: 4px; }
+        .result-text { color: #d9534f; font-weight: bold; margin-top: 15px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Giải Phương Trình Bậc 2</h2>
+        <p>Hệ thống xử lý tính toán trên máy chủ Cloud</p>
+        <div>
+            <input type="number" id="a" placeholder="a"> x² +
+            <input type="number" id="b" placeholder="b"> x +
+            <input type="number" id="c" placeholder="c"> = 0
+        </div>
+        <button onclick="solveMath()">Gửi lên Cloud tính toán</button>
+        <div id="current-result" class="result-text"></div>
+    </div>
+
+    <div class="card">
+        <h3>Lịch Sử Tính Toán (Lấy từ Database)</h3>
+        <p style="font-size: 13px; color: gray;">Dữ liệu JSON thô tại link: <a href="/api/history" target="_blank">/api/history</a></p>
+        <ul id="history" class="history-list">
+            <li>Đang tải lịch sử...</li>
+        </ul>
+    </div>
+
+    <script>
+        // Hàm tải lịch sử ngay khi mở web
+        function loadHistory() {
+            fetch('/api/history')
+                .then(res => res.json())
+                .then(data => {
+                    const ul = document.getElementById('history');
+                    ul.innerHTML = '';
+                    if (data.length === 0) {
+                        ul.innerHTML = '<li>Chưa có lịch sử tính toán nào.</li>';
+                    } else {
+                        data.forEach(item => {
+                            ul.innerHTML += `<li><strong>${item.equation}</strong> <br> ➔ Kết quả: ${item.result}</li>`;
+                        });
+                    }
+                });
+        }
+
+        // Hàm gửi dữ liệu lên server giải toán
+        function solveMath() {
+            const a = document.getElementById('a').value;
+            const b = document.getElementById('b').value;
+            const c = document.getElementById('c').value;
+
+            if(!a || !b || !c) {
+                document.getElementById('current-result').innerText = "Vui lòng nhập đủ a, b, c";
+                return;
+            }
+
+            document.getElementById('current-result').innerText = "Đang tính toán trên Cloud...";
+
+            fetch('/api/solve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ a: a, b: b, c: c })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('current-result').innerText = `Kết quả: ${data.result}`;
+                loadHistory(); // Cập nhật lại bảng lịch sử sau khi giải xong
+            });
+        }
+
+        // Chạy tải lịch sử lần đầu
+        loadHistory();
+    </script>
+</body>
+</html>
